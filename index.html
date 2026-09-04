@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HQuantum Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: rgba(26, 26, 36, 0.7);
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6c5ce7;
+            --accent-hover: #7c6df0;
+            --accent-glass: rgba(108, 92, 231, 0.15);
+            --border: rgba(42, 42, 58, 0.5);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --error: #ff4757;
+            --success: #00d68f;
+            --warning: #ffa502;
+            --blur: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(108, 92, 231, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .grid-background {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Login Screen */
+        .login-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-card);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 400px;
+            z-index: 1;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .login-container.hidden {
+            display: none;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, calc(-50% + 30px));
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .brand-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--accent-glass);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            border-radius: 16px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 2rem;
+            color: var(--accent);
+            backdrop-filter: blur(10px);
+        }
+
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #a0a0b0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .brand-name .accent {
+            color: var(--accent);
+            -webkit-text-fill-color: var(--accent);
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.1);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: rgba(160, 160, 176, 0.5);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(108, 92, 231, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: var(--error);
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.85rem;
+            display: none;
+            padding: 10px;
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            border-radius: 8px;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Dashboard */
+        .dashboard-container {
+            display: none;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+        }
+
+        .dashboard-container.active {
+            display: block;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border-bottom: 1px solid var(--border-glass);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topbar-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-glass);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        .topbar-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: -0.3px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .btn-logout {
+            padding: 8px 16px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-logout:hover {
+            color: var(--error);
+            border-color: rgba(255, 71, 87, 0.5);
+            background: rgba(255, 71, 87, 0.1);
+        }
+
+        .main-content {
+            padding: 32px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(108, 92, 231, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-icon.purple {
+            background: rgba(108, 92, 231, 0.15);
+            color: var(--accent);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+        }
+
+        .stat-icon.green {
+            background: rgba(0, 214, 143, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(0, 214, 143, 0.3);
+        }
+
+        .stat-icon.orange {
+            background: rgba(255, 165, 2, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(255, 165, 2, 0.3);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
+
+        /* Table */
+        .table-container {
+            background: var(--bg-card);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .table-toolbar {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .table-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        th {
+            text-align: left;
+            padding: 16px 24px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-glass);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-glass);
+            font-size: 0.9rem;
+        }
+
+        tbody tr {
+            transition: background 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-cell {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 6px;
+        }
+
+        .data-cell:hover {
+            background: rgba(108, 92, 231, 0.05);
+        }
+
+        .data-cell.editing {
+            padding: 8px 12px;
+            background: rgba(108, 92, 231, 0.1);
+        }
+
+        .data-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(10, 10, 15, 0.8);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .data-input:focus {
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+        }
+
+        .license-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(108, 92, 231, 0.1);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            color: var(--accent);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .hwid-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-delete {
+            padding: 6px 12px;
+            background: transparent;
+            color: var(--error);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-delete:hover {
+            background: rgba(255, 71, 87, 0.1);
+            border-color: var(--error);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 16px;
+            }
+            
+            .topbar {
+                padding: 12px 16px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            td, th {
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-background"></div>
+    
+    <!-- Login Screen -->
+    <div id="loginContainer" class="login-container">
+        <div class="brand">
+            <div class="brand-icon">H</div>
+            <h1 class="brand-name">H<span class="accent">Quantum</span></h1>
+            <p class="login-subtitle">Authentication Required</p>
+        </div>
+
+        <div class="form-group">
+            <label for="tokenInput">GitHub Token</label>
+            <input 
+                type="password" 
+                id="tokenInput" 
+                class="input-field" 
+                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                autocomplete="off"
+            >
+        </div>
+
+        <button id="loginBtn" class="btn-primary">Sign In</button>
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardContainer" class="dashboard-container">
+        <div class="topbar">
+            <div class="topbar-brand">
+                <div class="topbar-icon">H</div>
+                <span class="topbar-title">HQuantum Dashboard</span>
+            </div>
+            <div class="topbar-actions">
+                <div class="user-badge">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <span id="usernameDisplay">User</span>
+                </div>
+                <button id="logoutBtn" class="btn-logout">Sign Out</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="stats-grid fade-in">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-label">Total Records</span>
+                        <div class="stat-icon purple">#</div>
+                    </div>
+                    <div class="stat-value" id="totalRecords">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-label">Active Users</span>
+                        <div class="stat-icon green">U</div>
+                    </div>
+                    <div class="stat-value" id="activeUsers">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-label">Licenses</span>
+                        <div class="stat-icon orange">L</div>
+                    </div>
+                    <div class="stat-value" id="totalLicenses">0</div>
+                </div>
+            </div>
+
+            <div class="table-container fade-in">
+                <div class="table-toolbar">
+                    <div class="table-title">Data Management</div>
+                    <div class="table-subtitle">Click on any field to edit</div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>License</th>
+                                <th>HWID</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody">
+                            <tr>
+                                <td colspan="4" class="loading">
+                                    <span class="loading-spinner"></span>
+                                    Loading data...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GITHUB_API = 'https://api.github.com';
+        const REPO_OWNER = 'a1g52d3x67';
+        const REPO_NAME = 'api-a3f6c8e2b8d5014f6e2a8b9c7d3e0f12';
+        const FILE_PATH = 'db.json';
+
+        let currentToken = null;
+        let currentData = [];
+        let editingIndex = -1;
+        let editingField = null;
+        let originalValue = '';
+
+        // DOM Elements
+        const loginContainer = document.getElementById('loginContainer');
+        const dashboardContainer = document.getElementById('dashboardContainer');
+        const tokenInput = document.getElementById('tokenInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const usernameDisplay = document.getElementById('usernameDisplay');
+        const userAvatar = document.getElementById('userAvatar');
+        const dataTableBody = document.getElementById('dataTableBody');
+        const totalRecords = document.getElementById('totalRecords');
+        const activeUsers = document.getElementById('activeUsers');
+        const totalLicenses = document.getElementById('totalLicenses');
+
+        // Check for saved token
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedToken = localStorage.getItem('github_token');
+            if (savedToken) {
+                currentToken = savedToken;
+                loadDashboard(savedToken);
+            }
+        });
+
+        // Login
+        loginBtn.addEventListener('click', async () => {
+            const token = tokenInput.value.trim();
+            
+            if (!token) {
+                showError('Please enter a valid token');
+                return;
+            }
+
+            hideError();
+            loginBtn.textContent = 'Authenticating...';
+            loginBtn.disabled = true;
+
+            try {
+                const userData = await verifyToken(token);
+                localStorage.setItem('github_token', token);
+                currentToken = token;
+                usernameDisplay.textContent = userData.login;
+                userAvatar.textContent = userData.login.charAt(0).toUpperCase();
+                await loadDashboard(token);
+            } catch (error) {
+                showError('Invalid token or insufficient permissions');
+                loginBtn.textContent = 'Sign In';
+                loginBtn.disabled = false;
+            }
+        });
+
+        // Enter key to login
+        tokenInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loginBtn.click();
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('github_token');
+            currentToken = null;
+            currentData = [];
+            editingIndex = -1;
+            editingField = null;
+            
+            dashboardContainer.classList.remove('active');
+            loginContainer.classList.remove('hidden');
+            
+            tokenInput.value = '';
+            loginBtn.textContent = 'Sign In';
+            loginBtn.disabled = false;
+            hideError();
+        });
+
+        // Error handling
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        function hideError() {
+            errorMessage.textContent = '';
+            errorMessage.classList.remove('show');
+        }
+
+        // Verify token
+        async function verifyToken(token) {
+            const response = await fetch(`${GITHUB_API}/user`, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Invalid token');
+            }
+
+            return await response.json();
+        }
+
+        // Load dashboard
+        async function loadDashboard(token) {
+            loginContainer.classList.add('hidden');
+            dashboardContainer.classList.add('active');
+            
+            try {
+                await fetchData(token);
+                renderTable();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                dataTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="loading">Error loading data. Please verify repository access.</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Fetch data
+        async function fetchData(token) {
+            const response = await fetch(`${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Error fetching repository data');
+            }
+
+            const fileData = await response.json();
+            const content = atob(fileData.content);
+            const jsonData = JSON.parse(content);
+            
+            currentData = Array.isArray(jsonData) ? jsonData : jsonData.data || [];
+            return currentData;
+        }
+
+        // Render table
+        function renderTable() {
+            if (currentData.length === 0) {
+                dataTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="loading">No records available</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            dataTableBody.innerHTML = currentData.map((item, index) => {
+                const username = item.username || item.Username || '';
+                const license = item.license || item.License || '';
+                const hwid = item.hwid || item.HWID || '';
+                
+                return `
+                    <tr>
+                        <td class="data-cell" onclick="startEdit(${index}, 'username')" data-field="username" data-index="${index}">
+                            ${username}
+                        </td>
+                        <td class="data-cell" onclick="startEdit(${index}, 'license')" data-field="license" data-index="${index}">
+                            <span class="license-badge">${license}</span>
+                        </td>
+                        <td class="data-cell" onclick="startEdit(${index}, 'hwid')" data-field="hwid" data-index="${index}">
+                            <span class="hwid-badge">${hwid}</span>
+                        </td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn-delete" onclick="deleteRecord(${index})">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Update statistics
+        function updateStats() {
+            totalRecords.textContent = currentData.length;
+            
+            const uniqueUsers = new Set(currentData.map(item => item.username || item.Username));
+            activeUsers.textContent = uniqueUsers.size;
+            
+            const uniqueLicenses = new Set(currentData.map(item => item.license || item.License));
+            totalLicenses.textContent = uniqueLicenses.size;
+        }
+
+        // Start editing
+        window.startEdit = function(index, field) {
+            if (editingIndex !== -1) {
+                cancelEdit();
+            }
+            
+            editingIndex = index;
+            editingField = field;
+            
+            const item = currentData[index];
+            const value = item[field] || item[field.charAt(0).toUpperCase() + field.slice(1)] || '';
+            originalValue = value;
+            
+            const cell = document.querySelector(`[data-field="${field}"][data-index="${index}"]`);
+            cell.classList.add('editing');
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'data-input';
+            input.value = value;
+            input.id = 'editInput';
+            
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            
+            input.focus();
+            input.select();
+            
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveEdit();
+                } else if (e.key === 'Escape') {
+                    cancelEdit();
+                }
+            });
+            
+            input.addEventListener('blur', () => {
+                setTimeout(() => {
+                    if (editingIndex !== -1) {
+                        cancelEdit();
+                    }
+                }, 200);
+            });
+        };
+
+        // Save edit
+        window.saveEdit = async function() {
+            const input = document.getElementById('editInput');
+            if (!input || editingIndex === -1) return;
+            
+            const newValue = input.value.trim();
+            
+            if (newValue === originalValue) {
+                cancelEdit();
+                return;
+            }
+            
+            try {
+                const item = currentData[editingIndex];
+                const fieldKey = editingField;
+                
+                if (item.hasOwnProperty(fieldKey)) {
+                    item[fieldKey] = newValue;
+                } else if (item.hasOwnProperty(fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1))) {
+                    item[fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1)] = newValue;
+                }
+                
+                await updateFile();
+                cancelEdit();
+                renderTable();
+                updateStats();
+            } catch (error) {
+                console.error('Error saving edit:', error);
+                alert('Error saving changes');
+            }
+        };
+
+        // Cancel edit
+        window.cancelEdit = function() {
+            if (editingIndex === -1) return;
+            
+            editingIndex = -1;
+            editingField = null;
+            originalValue = '';
+            
+            renderTable();
+        };
+
+        // Delete record
+        window.deleteRecord = async function(index) {
+            if (!confirm('Are you sure you want to delete this record?')) {
+                return;
+            }
+            
+            try {
+                currentData.splice(index, 1);
+                await updateFile();
+                renderTable();
+                updateStats();
+            } catch (error) {
+                console.error('Error deleting record:', error);
+                alert('Error deleting record');
+            }
+        };
+
+        // Update file in GitHub
+        async function updateFile() {
+            const response = await fetch(`${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+                headers: {
+                    'Authorization': `token ${currentToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Error fetching file');
+            }
+
+            const fileData = await response.json();
+            const updatedContent = btoa(JSON.stringify(currentData, null, 2));
+            
+            const updateResponse = await fetch(`${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${currentToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'Update db.json - Data modification',
+                    content: updatedContent,
+                    sha: fileData.sha
+                })
+            });
+
+            if (!updateResponse.ok) {
+                throw new Error('Error updating file');
+            }
+        }
+    </script>
+</body>
+</html>
