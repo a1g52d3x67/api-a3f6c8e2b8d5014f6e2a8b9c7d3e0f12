@@ -519,6 +519,29 @@
             letter-spacing: 1px;
         }
 
+        .custom-key-input {
+            margin-bottom: 16px;
+        }
+
+        .custom-key-input input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+            outline: none;
+            letter-spacing: 1px;
+        }
+
+        .custom-key-input input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
         .btn-generate {
             width: 100%;
             padding: 14px;
@@ -531,12 +554,32 @@
             cursor: pointer;
             transition: all 0.3s ease;
             font-family: 'Inter', sans-serif;
+            margin-bottom: 8px;
         }
 
         .btn-generate:hover {
             background: var(--accent-hover);
             box-shadow: 0 10px 25px rgba(26, 115, 232, 0.3);
             transform: translateY(-2px);
+        }
+
+        .btn-custom {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-pill);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-custom:hover {
+            background: var(--accent-glow);
+            box-shadow: 0 10px 25px rgba(26, 115, 232, 0.2);
         }
 
         /* Table */
@@ -890,11 +933,28 @@
                     <p class="generator-subtitle">Genera claves únicas para tus usuarios</p>
                     
                     <div class="generated-key" id="generatedKey">
-                        QH-XXXX-XXXX-XXXX-XXXX
+                        QH-XXXXXXXXXXXXXXXXXXXX
                     </div>
                     
                     <button class="btn-generate" id="generateBtn">
                         Generar Nueva Licencia
+                    </button>
+                    
+                    <div style="margin: 24px 0; border-top: 1px solid var(--border);"></div>
+                    
+                    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 16px;">Licencia Personalizada</h3>
+                    
+                    <div class="custom-key-input">
+                        <input 
+                            type="text" 
+                            id="customKeyInput" 
+                            placeholder="QH-tu-clave-personalizada"
+                            maxlength="30"
+                        >
+                    </div>
+                    
+                    <button class="btn-custom" id="customKeyBtn">
+                        Crear Licencia Personalizada
                     </button>
                 </div>
 
@@ -951,6 +1011,8 @@
         const totalLicenses = document.getElementById('totalLicenses');
         const generatedKey = document.getElementById('generatedKey');
         const generateBtn = document.getElementById('generateBtn');
+        const customKeyInput = document.getElementById('customKeyInput');
+        const customKeyBtn = document.getElementById('customKeyBtn');
         const navItems = document.querySelectorAll('.nav-item');
         const mobileMenu = document.getElementById('mobileMenu');
         const hamburgerBtn = document.getElementById('hamburgerBtn');
@@ -980,17 +1042,14 @@
         function switchPage(page) {
             currentPage = page;
             
-            // Update nav items
             navItems.forEach(item => {
                 item.classList.toggle('active', item.dataset.page === page);
             });
             
-            // Update mobile menu items
             document.querySelectorAll('.mobile-menu .nav-item').forEach(item => {
                 item.classList.toggle('active', item.dataset.page === page);
             });
             
-            // Update sections
             document.querySelectorAll('.page-section').forEach(section => {
                 section.classList.remove('active');
             });
@@ -1002,7 +1061,6 @@
             
             document.getElementById(pageMap[page]).classList.add('active');
             
-            // Load licenses if generator page
             if (page === 'generator' && currentToken) {
                 loadLicenses();
             }
@@ -1182,21 +1240,19 @@
             `).join('');
         }
 
-        // Generate license
+        // Generate random license (formato: QH-16caracteres)
         function generateLicenseKey() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            const chars = 'abcdef0123456789';
             let key = 'QH-';
             
-            for (let i = 0; i < 4; i++) {
-                for (let j = 0; j < 4; j++) {
-                    key += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-                if (i < 3) key += '-';
+            for (let i = 0; i < 16; i++) {
+                key += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             
             return key;
         }
 
+        // Generate button
         generateBtn.addEventListener('click', async () => {
             const newLicense = generateLicenseKey();
             generatedKey.textContent = newLicense;
@@ -1208,6 +1264,41 @@
             } catch (error) {
                 console.error('Error saving license:', error);
                 alert('Error saving license');
+            }
+        });
+
+        // Custom key button
+        customKeyBtn.addEventListener('click', async () => {
+            const customKey = customKeyInput.value.trim();
+            
+            if (!customKey) {
+                alert('Please enter a custom license key');
+                return;
+            }
+            
+            // Ensure it starts with QH- if not already
+            let finalKey = customKey;
+            if (!finalKey.startsWith('QH-')) {
+                finalKey = 'QH-' + finalKey;
+            }
+            
+            generatedKey.textContent = finalKey;
+            
+            try {
+                currentLicenses.push({ License: finalKey });
+                await saveLicenses();
+                renderLicensesTable();
+                customKeyInput.value = '';
+            } catch (error) {
+                console.error('Error saving custom license:', error);
+                alert('Error saving custom license');
+            }
+        });
+
+        // Allow Enter key for custom input
+        customKeyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                customKeyBtn.click();
             }
         });
 
