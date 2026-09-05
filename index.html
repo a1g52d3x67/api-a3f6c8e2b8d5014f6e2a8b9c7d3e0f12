@@ -214,6 +214,43 @@
             color: var(--text-primary);
         }
 
+        /* Status indicator */
+        .status-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(17, 17, 17, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.5);
+            }
+        }
+
         /* Login Container */
         .login-container {
             position: fixed;
@@ -343,18 +380,6 @@
             background: var(--accent-hover);
             box-shadow: 0 10px 25px rgba(26, 115, 232, 0.3);
             transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--accent);
-            color: var(--text-primary);
-            background: var(--accent-glow);
         }
 
         .error-message {
@@ -888,7 +913,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-header">
-                        <span class="stat-label">Licenses</span>
+                        <span class="stat-label">Total Licenses</span>
                         <div class="stat-icon">L</div>
                     </div>
                     <div class="stat-value" id="totalLicenses">0</div>
@@ -899,7 +924,7 @@
                 <div class="table-toolbar">
                     <div>
                         <div class="table-title">Data Management</div>
-                        <div class="table-subtitle">Click on any field to edit</div>
+                        <div class="table-subtitle">Auto-refresh every 3 seconds</div>
                     </div>
                 </div>
                 <div class="table-wrapper">
@@ -960,7 +985,7 @@
 
                 <div class="generator-card">
                     <h2 class="generator-title">Licencias Generadas</h2>
-                    <p class="generator-subtitle">Todas las licencias creadas</p>
+                    <p class="generator-subtitle">Auto-refresh every 3 seconds</p>
                     
                     <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
                         <table>
@@ -982,12 +1007,19 @@
         </div>
     </div>
 
+    <!-- Status Indicator -->
+    <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span>Live Sync</span>
+    </div>
+
     <script>
         const GITHUB_API = 'https://api.github.com';
         const REPO_OWNER = 'a1g52d3x67';
         const REPO_NAME = 'api-a3f6c8e2b8d5014f6e2a8b9c7d3e0f12';
         const FILE_PATH = 'db.json';
         const LICENSES_PATH = 'x9w4q7.json';
+        const REFRESH_INTERVAL = 3000; // 3 seconds
 
         let currentToken = null;
         let currentData = [];
@@ -996,6 +1028,7 @@
         let editingField = null;
         let originalValue = '';
         let currentPage = 'dashboard';
+        let refreshTimer = null;
 
         // DOM Elements
         const loginContainer = document.getElementById('loginContainer');
@@ -1060,10 +1093,6 @@
             };
             
             document.getElementById(pageMap[page]).classList.add('active');
-            
-            if (page === 'generator' && currentToken) {
-                loadLicenses();
-            }
         }
 
         // Login
@@ -1084,6 +1113,7 @@
                 localStorage.setItem('github_token', token);
                 currentToken = token;
                 await loadDashboard(token);
+                startAutoRefresh();
             } catch (error) {
                 showError('Invalid token or insufficient permissions');
                 loginBtn.textContent = 'Sign In';
@@ -1099,6 +1129,7 @@
 
         // Logout
         logoutBtn.addEventListener('click', () => {
+            stopAutoRefresh();
             localStorage.removeItem('github_token');
             currentToken = null;
             currentData = [];
@@ -1139,18 +1170,48 @@
             return await response.json();
         }
 
+        // Auto refresh
+        function startAutoRefresh() {
+            stopAutoRefresh();
+            refreshTimer = setInterval(async () => {
+                if (currentToken) {
+                    await refreshAllData();
+                }
+            }, REFRESH_INTERVAL);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+            }
+        }
+
+        async function refreshAllData() {
+            try {
+                // Only refresh if not editing
+                if (editingIndex === -1) {
+                    await fetchAllData();
+                    renderTable();
+                    renderLicensesTable();
+                    updateStats();
+                }
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+            }
+        }
+
         // Load dashboard
         async function loadDashboard(token) {
             loginContainer.classList.add('hidden');
             dashboardContainer.classList.add('active');
             
             try {
-                await fetchData(token);
+                await fetchAllData();
                 renderTable();
+                renderLicensesTable();
                 updateStats();
-                if (currentPage === 'generator') {
-                    await loadLicenses();
-                }
+                startAutoRefresh();
             } catch (error) {
                 console.error('Error loading data:', error);
                 dataTableBody.innerHTML = `
@@ -1161,13 +1222,22 @@
             }
         }
 
+        // Fetch all data
+        async function fetchAllData() {
+            await Promise.all([
+                fetchData(),
+                fetchLicenses()
+            ]);
+        }
+
         // Fetch data
-        async function fetchData(token) {
+        async function fetchData() {
             const response = await fetch(`${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
                 headers: {
-                    'Authorization': `token ${token}`,
+                    'Authorization': `token ${currentToken}`,
                     'Accept': 'application/vnd.github.v3+json'
-                }
+                },
+                cache: 'no-store'
             });
 
             if (!response.ok) {
@@ -1182,21 +1252,21 @@
             return currentData;
         }
 
-        // Load licenses
-        async function loadLicenses() {
+        // Fetch licenses
+        async function fetchLicenses() {
             try {
                 const response = await fetch(`${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${LICENSES_PATH}`, {
                     headers: {
                         'Authorization': `token ${currentToken}`,
                         'Accept': 'application/vnd.github.v3+json'
-                    }
+                    },
+                    cache: 'no-store'
                 });
 
                 if (!response.ok) {
                     if (response.status === 404) {
                         currentLicenses = [];
-                        renderLicensesTable();
-                        return;
+                        return currentLicenses;
                     }
                     throw new Error('Error fetching licenses');
                 }
@@ -1204,19 +1274,17 @@
                 const fileData = await response.json();
                 const content = atob(fileData.content);
                 currentLicenses = JSON.parse(content);
-                renderLicensesTable();
+                return currentLicenses;
             } catch (error) {
                 console.error('Error loading licenses:', error);
-                licensesTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="2" class="loading">Error loading licenses</td>
-                    </tr>
-                `;
+                return currentLicenses;
             }
         }
 
         // Render licenses table
         function renderLicensesTable() {
+            if (editingIndex !== -1) return; // Don't update while editing
+            
             if (!Array.isArray(currentLicenses) || currentLicenses.length === 0) {
                 licensesTableBody.innerHTML = `
                     <tr>
@@ -1240,7 +1308,7 @@
             `).join('');
         }
 
-        // Generate random license (formato: QH-16caracteres)
+        // Generate random license
         function generateLicenseKey() {
             const chars = 'abcdef0123456789';
             let key = 'QH-';
@@ -1261,6 +1329,7 @@
                 currentLicenses.push({ License: newLicense });
                 await saveLicenses();
                 renderLicensesTable();
+                await refreshAllData(); // Refresh immediately
             } catch (error) {
                 console.error('Error saving license:', error);
                 alert('Error saving license');
@@ -1276,7 +1345,6 @@
                 return;
             }
             
-            // Ensure it starts with QH- if not already
             let finalKey = customKey;
             if (!finalKey.startsWith('QH-')) {
                 finalKey = 'QH-' + finalKey;
@@ -1289,6 +1357,7 @@
                 await saveLicenses();
                 renderLicensesTable();
                 customKeyInput.value = '';
+                await refreshAllData(); // Refresh immediately
             } catch (error) {
                 console.error('Error saving custom license:', error);
                 alert('Error saving custom license');
@@ -1353,6 +1422,7 @@
                 currentLicenses.splice(index, 1);
                 await saveLicenses();
                 renderLicensesTable();
+                await refreshAllData(); // Refresh immediately
             } catch (error) {
                 console.error('Error deleting license:', error);
                 alert('Error deleting license');
@@ -1361,6 +1431,8 @@
 
         // Render table
         function renderTable() {
+            if (editingIndex !== -1) return; // Don't update while editing
+            
             if (currentData.length === 0) {
                 dataTableBody.innerHTML = `
                     <tr>
@@ -1476,8 +1548,7 @@
                 
                 await updateFile();
                 cancelEdit();
-                renderTable();
-                updateStats();
+                await refreshAllData(); // Refresh immediately
             } catch (error) {
                 console.error('Error saving edit:', error);
                 alert('Error saving changes');
@@ -1506,6 +1577,7 @@
                 await updateFile();
                 renderTable();
                 updateStats();
+                await refreshAllData(); // Refresh immediately
             } catch (error) {
                 console.error('Error deleting record:', error);
                 alert('Error deleting record');
@@ -1546,6 +1618,11 @@
                 throw new Error('Error updating file');
             }
         }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
+        });
     </script>
 </body>
 </html>
